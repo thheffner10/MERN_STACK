@@ -1,0 +1,122 @@
+.modal-overlay
+{
+    position: fixed;
+    inset: 0;
+
+    z-index: 1000;
+
+    padding: var(--space-lg);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: rgba(15, 23, 42, 0.62);
+
+    backdrop-filter: blur(4px);
+}
+
+.habit-modal
+{
+    width: min(500px, 100%);
+    max-height: calc(100vh - 48px);
+
+    padding: var(--space-xl);
+
+    overflow-y: auto;
+
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-xl);
+
+    background: white;
+
+    box-shadow: var(--shadow-modal);
+}
+
+.habit-modal h2
+{
+    margin-bottom: var(--space-xl);
+}
+
+.habit-modal form
+{
+    display: flex;
+    flex-direction: column;
+}
+
+.habit-modal label
+{
+    margin-top: var(--space-md);
+}
+
+.habit-modal label:first-of-type
+{
+    margin-top: 0;
+}
+
+.habit-modal input,
+.habit-modal textarea,
+.habit-modal select
+{
+    margin-bottom: var(--space-xs);
+}
+
+.habit-modal textarea
+{
+    min-height: 110px;
+    resize: vertical;
+}
+
+.modal-buttons
+{
+    display: flex;
+
+    gap: var(--space-sm);
+
+    margin-top: var(--space-xl);
+}
+
+.modal-buttons button
+{
+    flex: 1;
+}
+
+.modal-buttons button:first-child
+{
+    background: white;
+    border-color: var(--color-border);
+
+    color: var(--color-text);
+}
+
+.modal-buttons button:first-child:hover
+{
+    background: var(--color-surface-soft);
+}
+
+@media (max-width: 520px)
+{
+    .modal-overlay
+    {
+        align-items: flex-end;
+
+        padding: 0;
+    }
+
+    .habit-modal
+    {
+        width: 100%;
+        max-height: 92vh;
+
+        border-radius:
+            var(--radius-xl)
+            var(--radius-xl)
+            0
+            0;
+    }
+
+    .modal-buttons
+    {
+        flex-direction: column-reverse;
+    }
+}
