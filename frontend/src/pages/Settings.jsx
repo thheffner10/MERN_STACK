@@ -218,12 +218,6 @@ function Settings()
                                     readOnly
                                     aria-readonly="true"
                                 />
-
-                                <small>
-                                    Changing your login
-                                    email requires the
-                                    account API.
-                                </small>
                             </div>
                         </div>
                     </section>
