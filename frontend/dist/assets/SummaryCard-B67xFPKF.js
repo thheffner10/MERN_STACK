@@ -1,1 +1,0 @@
-import{R as e}from"./index-CjC5RzO4.js";function l({title:a,value:m,icon:r}){return e.createElement("div",{className:"summary-card"},e.createElement("div",{className:"summary-icon"},r),e.createElement("div",null,e.createElement("p",null,a),e.createElement("h2",null,m)))}export{l as S};

@@ -1,0 +1,257 @@
+.app-layout
+{
+    display: flex;
+
+    min-height: 100vh;
+
+    background: var(--color-background);
+}
+
+.app-content
+{
+    flex: 1;
+    min-width: 0;
+
+    padding:
+        var(--space-xl)
+        clamp(var(--space-lg), 4vw, var(--space-2xl));
+}
+
+.sidebar
+{
+    position: sticky;
+    top: 0;
+
+    width: 260px;
+    height: 100vh;
+
+    padding:
+        var(--space-xl)
+        var(--space-lg);
+
+    display: flex;
+    flex-direction: column;
+
+    background:
+        linear-gradient(
+            180deg,
+            #111827 0%,
+            #172033 100%
+        );
+
+    color: white;
+}
+
+.sidebar-logo
+{
+    margin-bottom: var(--space-2xl);
+
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.sidebar nav
+{
+    display: flex;
+    flex-direction: column;
+
+    gap: var(--space-xs);
+}
+
+.sidebar nav a
+{
+    min-height: 46px;
+
+    padding:
+        12px
+        14px;
+
+    display: flex;
+    align-items: center;
+
+    gap: var(--space-sm);
+
+    border-radius: var(--radius-md);
+
+    color: #cbd5e1;
+
+    font-size: 0.96rem;
+    font-weight: 650;
+
+    text-decoration: none;
+
+    transition:
+        background-color var(--transition-fast),
+        color var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+.sidebar nav a span
+{
+    width: 24px;
+
+    display: inline-flex;
+    justify-content: center;
+
+    font-size: 1.08rem;
+}
+
+.sidebar nav a:hover
+{
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+
+    transform: translateX(2px);
+}
+
+.sidebar nav a.active
+{
+    background: var(--color-primary);
+    color: white;
+
+    box-shadow:
+        0 8px 18px rgba(37, 99, 235, 0.28);
+}
+
+.logout-button
+{
+    width: 100%;
+
+    margin-top: auto;
+
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+
+    color: white;
+}
+
+.logout-button:hover
+{
+    background: var(--color-danger);
+}
+
+@media (max-width: 900px)
+{
+    .sidebar
+    {
+        width: 84px;
+
+        padding:
+            var(--space-lg)
+            var(--space-sm);
+    }
+
+    .sidebar-logo
+    {
+        overflow: hidden;
+
+        margin-bottom: var(--space-xl);
+
+        font-size: 0;
+        text-align: center;
+    }
+
+    .sidebar-logo::first-letter
+    {
+        font-size: 1.5rem;
+    }
+
+    .sidebar nav a
+    {
+        justify-content: center;
+
+        padding: 12px;
+        font-size: 0;
+    }
+
+    .sidebar nav a span
+    {
+        width: auto;
+        font-size: 1.25rem;
+    }
+
+    .logout-button
+    {
+        overflow: hidden;
+
+        padding:
+            12px
+            8px;
+
+        font-size: 0;
+    }
+
+    .logout-button::before
+    {
+        content: "↪";
+        font-size: 1.25rem;
+    }
+
+    .app-content
+    {
+        padding:
+            var(--space-lg)
+            var(--space-md);
+    }
+}
+
+@media (max-width: 560px)
+{
+    .app-layout
+    {
+        display: block;
+    }
+
+    .sidebar
+    {
+        position: static;
+
+        width: 100%;
+        height: auto;
+
+        padding:
+            var(--space-sm)
+            var(--space-md);
+
+        flex-direction: row;
+        align-items: center;
+
+        overflow-x: auto;
+    }
+
+    .sidebar-logo
+    {
+        display: none;
+    }
+
+    .sidebar nav
+    {
+        flex: 1;
+        flex-direction: row;
+
+        gap: var(--space-xs);
+    }
+
+    .sidebar nav a
+    {
+        min-width: 48px;
+    }
+
+    .logout-button
+    {
+        width: 48px;
+        min-width: 48px;
+
+        margin:
+            0
+            0
+            0
+            var(--space-xs);
+    }
+
+    .app-content
+    {
+        padding: var(--space-md);
+    }
+}

@@ -59,10 +59,7 @@ function HabitCard({
             <div className="card-actions">
                 <button
                     type="button"
-                    onClick={() => {
-                    console.log("CLICKED HABIT:", habit);
-                    onToggle(habit.id || habit._id);
-                }}
+                    onClick={() => onToggle(habit.id)}
                 >
                     {isCompleted
                         ? "Undo"
@@ -78,7 +75,7 @@ function HabitCard({
 
                 <button
                     type="button"
-                    onClick={() => onDelete(habit.id || habit._id)}
+                    onClick={() => onDelete(habit.id)}
                 >
                     Delete
                 </button>
