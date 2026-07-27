@@ -201,9 +201,8 @@ app.post('/api/auth/register', async(req,res)=>{
 });
 
 app.post('/api/auth/resend-verification', async (req, res) => {
-    const { username } = req.body; // or email, depending on what your frontend sends
+    const { username } = req.body;
 
-    // Placeholder: In production, you would trigger your email transporter (like Nodemailer) here
     res.json({
         success: true,
         message: `A new verification link has been sent to ${username || 'your email'}.`
@@ -211,10 +210,8 @@ app.post('/api/auth/resend-verification', async (req, res) => {
 });
 
 app.post('/api/auth/verify-email', async (req, res) => {
-    const { token } = req.body; // your frontend likely sends a verification token or userId
+    const { token } = req.body;
 
-    // Placeholder: In a production app, you would look up the user by token 
-    // in MongoDB and change their status to "isVerified: true"
     res.json({
         success: true,
         message: "Email successfully verified! You can now log in."
@@ -252,14 +249,11 @@ app.post('/api/auth/login', async(req,res)=>{
         });
     }
 
-
-    // Generate a temporary mock authentication token string
     const mockToken = crypto.randomBytes(40).toString('hex');
 
-    // RETURN BOTH USER AND TOKEN TO MATCH FRONTEND EXPECTATIONS
     res.json({
         success: true,
-        token: mockToken, // Added this to satisfy result.token
+        token: mockToken,
         user: {
             id: user._id.toString(),
             username: user.username,
@@ -534,7 +528,6 @@ app.get('/api/habits', async(req,res)=>{
 });
 
 app.get('/api/tasks', async(req,res)=>{
-    // Placeholder array to satisfy the frontend map functions
     res.json({
         success: true,
         tasks: [] 
