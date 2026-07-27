@@ -22,8 +22,11 @@ const crypto = require('crypto');
 app.use(express.json());
 
 app.use(cors({
-    origin: "https://tncis4004.xyz",
-    credentials: true
+  origin: [
+    'https://tncis4004.xyz', 
+    'http://localhost:5173'
+  ],
+  credentials: true
 }));
 
 app.use(session({
@@ -130,7 +133,7 @@ passport.authenticate('google',
 
 });
 
-app.get('/api/me', (req, res) => {
+app.get('/api/auth/me', (req, res) => {
 
     if (!req.user)
     {
@@ -152,11 +155,11 @@ app.get('/api/me', (req, res) => {
 
 });
 
-app.post('/api/register', async(req,res)=>{
+app.post('/api/auth/register', async(req,res)=>{
 
-    const {firstName, lastName, username, password} = req.body;
+    const {firstName, lastName, email, password} = req.body;
 
-    if(!firstName || !lastName || !username || !password)
+    if(!firstName || !lastName || !email || !password)
     {
         return res.json({
             success:false,
@@ -167,7 +170,7 @@ app.post('/api/register', async(req,res)=>{
     const db = client.db('HabitTracker');
 
     const existingUser = await db.collection('Users')
-        .findOne({username: username});
+        .findOne({username: email});
 
     if(existingUser)
     {
@@ -184,7 +187,7 @@ app.post('/api/register', async(req,res)=>{
     await db.collection('Users').insertOne({
         firstName:firstName,
         lastName:lastName,
-        username:username,
+        username:email,
         password:hashedPassword,
         authProvider:"local"
     });
@@ -197,14 +200,35 @@ app.post('/api/register', async(req,res)=>{
 
 });
 
-app.post('/api/login', async(req,res)=>{
+app.post('/api/auth/resend-verification', async (req, res) => {
+    const { username } = req.body; // or email, depending on what your frontend sends
 
-    const {username,password}=req.body;
+    // Placeholder: In production, you would trigger your email transporter (like Nodemailer) here
+    res.json({
+        success: true,
+        message: `A new verification link has been sent to ${username || 'your email'}.`
+    });
+});
+
+app.post('/api/auth/verify-email', async (req, res) => {
+    const { token } = req.body; // your frontend likely sends a verification token or userId
+
+    // Placeholder: In a production app, you would look up the user by token 
+    // in MongoDB and change their status to "isVerified: true"
+    res.json({
+        success: true,
+        message: "Email successfully verified! You can now log in."
+    });
+});
+
+app.post('/api/auth/login', async(req,res)=>{
+
+    const {email,password}=req.body;
 
     const db = client.db('HabitTracker');
 
     const user = await db.collection('Users')
-        .findOne({username:username});
+        .findOne({username:email});
 
 
     if(!user)
@@ -229,28 +253,33 @@ app.post('/api/login', async(req,res)=>{
     }
 
 
+    // Generate a temporary mock authentication token string
+    const mockToken = crypto.randomBytes(40).toString('hex');
+
+    // RETURN BOTH USER AND TOKEN TO MATCH FRONTEND EXPECTATIONS
     res.json({
-        success:true,
-        user:{
-            id:user._id.toString(),
-            username:user.username,
-            firstName:user.firstName,
-            lastName:user.lastName
+        success: true,
+        token: mockToken, // Added this to satisfy result.token
+        user: {
+            id: user._id.toString(),
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName
         }
     });
 
 });
 
-app.post('/api/requestpasswordreset', async(req,res)=>{
+app.post('/api/auth/forgot-password', async(req,res)=>{
 
-    const {username} = req.body;
+    const {email} = req.body;
 
     const db = client.db('HabitTracker');
 
 
     const user = await db.collection('Users')
         .findOne({
-            username:username
+            username:email
         });
 
 
@@ -295,7 +324,7 @@ app.post('/api/requestpasswordreset', async(req,res)=>{
 
 });
 
-app.patch('/api/resetpassword', async(req,res)=>{
+app.post('/api/auth/reset-password', async(req,res)=>{
 
     const {token,newPassword} = req.body;
 
@@ -397,7 +426,7 @@ app.post('/api/profile', async(req,res)=>{
 
 });
 
-app.post('/api/createhabit', async(req,res)=>{
+app.post('/api/habits', async(req,res)=>{
 
     const {userId, name, frequency} = req.body;
 
@@ -447,21 +476,24 @@ app.post('/api/createhabit', async(req,res)=>{
     };
 
 
-    await db.collection('Habits').insertOne(newHabit);
-
+    const result = await db.collection('Habits').insertOne(newHabit);
 
     res.json({
         success:true,
-        message:"Habit created"
+        habit:{
+            id: result.insertedId.toString(),
+            _id: result.insertedId.toString(),
+            ...newHabit
+        }
     });
 
 });
 
-app.post('/api/gethabits', async(req,res)=>{
-
-    const {userId} = req.body;
+app.get('/api/habits', async(req,res)=>{
 
     const db = client.db('HabitTracker');
+
+    const userId = req.query.userId || req.user?._id?.toString();
 
     let habits = await db.collection('Habits')
     .find({userId:userId})
@@ -499,6 +531,14 @@ app.post('/api/gethabits', async(req,res)=>{
         habits:habits
     });
 
+});
+
+app.get('/api/tasks', async(req,res)=>{
+    // Placeholder array to satisfy the frontend map functions
+    res.json({
+        success: true,
+        tasks: [] 
+    });
 });
 
 app.patch('/api/updatehabit', async(req,res)=>{
