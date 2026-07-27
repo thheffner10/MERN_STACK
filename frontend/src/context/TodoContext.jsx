@@ -137,7 +137,8 @@ export function TodoProvider({
     {
         const updatedTodo =
             await toggleTodoCompletion(
-                id
+                id,
+                user.id
             );
 
         const updatedTodoId =

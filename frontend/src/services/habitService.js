@@ -45,20 +45,24 @@ export async function editHabit(
     return result.habit || result;
 }
 
-export async function removeHabit(
-    habitId
-)
+export async function removeHabit(habitId, userId)
 {
     return apiRequest(
-        `/habits/${habitId}`,
+        "/deletehabit",
         {
-            method: "DELETE"
+            method: "DELETE",
+            body:
+            {
+                habitId,
+                userId
+            }
         }
     );
 }
 
 export async function toggleHabitCompletion(
     habitId,
+    userId,
     date
 )
 {
@@ -68,6 +72,7 @@ export async function toggleHabitCompletion(
             {
                 method: "POST",
                 body: {
+                    userId,
                     date
                 }
             }

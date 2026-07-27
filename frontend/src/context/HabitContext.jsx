@@ -49,8 +49,9 @@ export function HabitProvider({
 })
 {
     const {
-        isAuthenticated
-    } = useAuth();
+        isAuthenticated,
+        user
+} = useAuth();
 
     const [habits, setHabits] =
         useState([]);
@@ -105,7 +106,10 @@ export function HabitProvider({
     async function addHabit(habit)
     {
         const createdHabit =
-            await createHabit(habit);
+        await createHabit({
+            ...habit,
+            userId: user.id
+        });
 
         setHabits((previous) => [
             ...previous,
@@ -119,19 +123,20 @@ export function HabitProvider({
         updatedHabit
     )
     {
+        console.log("Updating habit:", updatedHabit);
         const savedHabit =
-            await editHabit(
-                updatedHabit
-            );
+            await editHabit({
+                ...updatedHabit,
+                userId: user.id
+            });
 
         const savedHabitId =
-            getHabitId(savedHabit);
+        getHabitId(updatedHabit);
 
         setHabits((previous) =>
             previous.map((habit) =>
-                getHabitId(habit) ===
-                savedHabitId
-                    ? savedHabit
+                getHabitId(habit) === savedHabitId
+                    ? updatedHabit
                     : habit
             )
         );
@@ -141,7 +146,7 @@ export function HabitProvider({
 
     async function deleteHabit(id)
     {
-        await removeHabit(id);
+        await removeHabit(id, user.id);
 
         setHabits((previous) =>
             previous.filter(
@@ -159,6 +164,7 @@ export function HabitProvider({
         const updatedHabit =
             await toggleHabitCompletion(
                 id,
+                user.id,
                 today
             );
 

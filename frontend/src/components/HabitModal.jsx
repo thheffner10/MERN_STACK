@@ -74,14 +74,16 @@ function HabitModal({
         }
 
         onSave({
-            ...habit,
-            name: trimmedName,
-            id: existingHabit
-                ? existingHabit.id
-                : Date.now(),
-            completions: existingHabit
-                ? existingHabit.completions || []
-                : []
+        ...habit,
+        name: trimmedName,
+
+        _id: existingHabit
+        ? (existingHabit._id || existingHabit.id)
+        : undefined,
+
+        completions: existingHabit
+            ? existingHabit.completions || []
+            : []
         });
 
         onClose();

@@ -111,7 +111,7 @@ function HabitList({
                 <div className="habit-grid">
                     {displayedHabits.map((habit) => (
                         <HabitCard
-                            key={habit.id}
+                            key={habit.id || habit._id}
                             habit={habit}
                             onDelete={deleteHabit}
                             onToggle={toggleHabit}

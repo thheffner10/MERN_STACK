@@ -422,7 +422,12 @@ app.post('/api/profile', async(req,res)=>{
 
 app.post('/api/habits', async(req,res)=>{
 
-    const {userId, name, frequency} = req.body;
+    const {
+    userId,
+    name,
+    description,
+    frequency
+} = req.body;
 
     if(!ObjectId.isValid(userId))
     {
@@ -463,6 +468,7 @@ app.post('/api/habits', async(req,res)=>{
     const newHabit = {
         userId:userId,
         name:name,
+        description: description,
         frequency:frequency,
         streak:0,
         completedToday:false,
@@ -521,22 +527,321 @@ app.get('/api/habits', async(req,res)=>{
     }
 
     res.json({
+    success:true,
+    habits: habits.map(habit => ({
+        ...habit,
+        id: habit._id.toString(),
+        _id: habit._id.toString()
+    }))
+});
+
+});
+
+app.post('/api/tasks', async(req,res)=>{
+
+    const {
+        userId,
+        title,
+        description,
+        priority
+    } = req.body;
+
+
+    if(!ObjectId.isValid(userId))
+    {
+        return res.json({
+            success:false,
+            message:"Invalid user ID"
+        });
+    }
+
+
+    if(!title)
+    {
+        return res.json({
+            success:false,
+            message:"Missing title"
+        });
+    }
+
+
+    const db = client.db('HabitTracker');
+
+
+    const user = await db.collection('Users')
+        .findOne({
+            _id:new ObjectId(userId)
+        });
+
+
+    if(!user)
+    {
+        return res.json({
+            success:false,
+            message:"User not found"
+        });
+    }
+
+
+    const newTask = {
+
+        userId:userId,
+
+        title:title,
+
+        description:description || "",
+
+        priority:priority || "Medium",
+
+        completed:false,
+
+        createdAt:new Date()
+
+    };
+
+
+    const result =
+        await db.collection('Tasks')
+        .insertOne(newTask);
+
+
+
+    res.json({
+
         success:true,
-        habits:habits
+
+        task:{
+            id:result.insertedId.toString(),
+            _id:result.insertedId.toString(),
+            ...newTask
+        }
+
     });
 
 });
 
 app.get('/api/tasks', async(req,res)=>{
+
+
+    const db = client.db('HabitTracker');
+
+
+    const userId =
+        req.query.userId ||
+        req.user?._id?.toString();
+
+
+
+    const tasks =
+        await db.collection('Tasks')
+        .find({
+            userId:userId
+        })
+        .toArray();
+
+
+
     res.json({
-        success: true,
-        tasks: [] 
+
+        success:true,
+
+        tasks:tasks.map(task=>({
+
+            ...task,
+
+            id:task._id.toString(),
+
+            _id:task._id.toString()
+
+        }))
+
     });
+
+
 });
 
-app.patch('/api/updatehabit', async(req,res)=>{
+app.put('/api/tasks/:id', async(req,res)=>{
 
-    const {userId, habitId, name, frequency} = req.body;
+
+    const taskId=req.params.id;
+
+
+    const {
+        userId,
+        title,
+        description,
+        priority
+    } = req.body;
+
+
+
+    const db=client.db('HabitTracker');
+
+
+
+    const result =
+        await db.collection('Tasks')
+        .updateOne(
+
+        {
+            _id:new ObjectId(taskId),
+            userId:userId
+        },
+
+        {
+
+            $set:{
+                title,
+                description,
+                priority
+            }
+
+        });
+
+
+    if(result.matchedCount===0)
+    {
+        return res.json({
+            success:false,
+            message:"Task not found"
+        });
+    }
+
+
+
+    const updated =
+        await db.collection('Tasks')
+        .findOne({
+            _id:new ObjectId(taskId)
+        });
+
+
+
+    res.json({
+
+        success:true,
+
+        task:{
+            ...updated,
+            id:updated._id.toString(),
+            _id:updated._id.toString()
+        }
+
+    });
+
+
+});
+
+app.delete('/api/tasks/:id', async(req,res)=>{
+
+
+    const taskId=req.params.id;
+
+
+    const db=client.db('HabitTracker');
+
+
+    const result =
+        await db.collection('Tasks')
+        .deleteOne({
+
+            _id:new ObjectId(taskId)
+
+        });
+
+
+
+    res.json({
+
+        success:
+            result.deletedCount > 0
+
+    });
+
+
+});
+
+app.patch('/api/tasks/:id/toggle', async(req,res)=>{
+
+
+    const taskId=req.params.id;
+
+
+    const db=client.db('HabitTracker');
+
+
+
+    const task =
+        await db.collection('Tasks')
+        .findOne({
+
+            _id:new ObjectId(taskId)
+
+        });
+
+
+
+    if(!task)
+    {
+        return res.json({
+            success:false,
+            message:"Task not found"
+        });
+    }
+
+
+
+    await db.collection('Tasks')
+    .updateOne(
+
+        {
+            _id:new ObjectId(taskId)
+        },
+
+        {
+            $set:{
+                completed:!task.completed
+            }
+        }
+
+    );
+
+
+
+    const updated =
+        await db.collection('Tasks')
+        .findOne({
+
+            _id:new ObjectId(taskId)
+
+        });
+
+
+
+    res.json({
+
+        success:true,
+
+        task:{
+            ...updated,
+            id:updated._id.toString(),
+            _id:updated._id.toString()
+        }
+
+    });
+
+
+});
+
+app.put('/api/habits/:id', async(req,res)=>{
+    const habitId = req.params.id;
+
+    const {
+        userId,
+        name,
+        description,
+        frequency
+    } = req.body;
 
     if(!ObjectId.isValid(habitId))
     {
@@ -557,8 +862,9 @@ app.patch('/api/updatehabit', async(req,res)=>{
         },
         {
             $set:{
-                name:name,
-                frequency:frequency
+                name,
+                description,
+                frequency
             }
         }
     );
@@ -626,9 +932,13 @@ app.delete('/api/deletehabit', async(req,res)=>{
 
 });
 
-app.patch('/api/completehabit', async(req,res)=>{
+app.post('/api/habits/:id/toggle', async (req, res) => {
 
-    const {userId, habitId} = req.body;
+    const habitId = req.params.id;
+    const { userId } = req.body;
+
+    console.log(req.body);
+console.log(req.params.id);
 
     if(!ObjectId.isValid(habitId))
     {
@@ -710,10 +1020,13 @@ app.patch('/api/completehabit', async(req,res)=>{
         );
 
 
+    const updatedHabit = await db.collection("Habits").findOne({
+    _id: new ObjectId(habitId)
+    });
+
     res.json({
-        success:true,
-        message:"Habit completed",
-        streak:newStreak
+        success: true,
+        habit: updatedHabit
     });
 
 });
