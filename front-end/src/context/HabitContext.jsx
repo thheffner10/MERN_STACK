@@ -77,7 +77,7 @@ export function HabitProvider({
             try
             {
                 const result =
-                    await getHabits();
+                    await getHabits(user.id);
 
                 setHabits(
                     Array.isArray(result)
@@ -96,7 +96,7 @@ export function HabitProvider({
             {
                 setLoading(false);
             }
-        }, [isAuthenticated]);
+        }, [isAuthenticated, user]);
 
     useEffect(() =>
     {

@@ -625,6 +625,8 @@ app.post('/api/tasks', async(req,res)=>{
 
 app.get('/api/tasks', async(req,res)=>{
 
+    console.log("QUERY USER:", req.query.userId);
+    console.log("SESSION USER:", req.user);
 
     const db = client.db('HabitTracker');
 
@@ -742,6 +744,7 @@ app.delete('/api/tasks/:id', async(req,res)=>{
 
     const taskId=req.params.id;
 
+    const { userId } = req.body;
 
     const db=client.db('HabitTracker');
 

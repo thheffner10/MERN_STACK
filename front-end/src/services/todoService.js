@@ -2,10 +2,10 @@ import {
     apiRequest
 } from "./apiClient";
 
-export async function getTodos()
+export async function getTodos(userId)
 {
     const result =
-        await apiRequest("/tasks");
+        await apiRequest(`/tasks?userId=${userId}`);
 
     return result.tasks || result.todos || result;
 }

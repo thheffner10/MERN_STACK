@@ -59,7 +59,7 @@ export function TodoProvider({
             try
             {
                 const result =
-                    await getTodos();
+                    await getTodos(user.id);
 
                 setTodos(
                     Array.isArray(result)
@@ -78,7 +78,7 @@ export function TodoProvider({
             {
                 setLoading(false);
             }
-        }, [isAuthenticated]);
+        }, [isAuthenticated, user]);
 
     useEffect(() =>
     {

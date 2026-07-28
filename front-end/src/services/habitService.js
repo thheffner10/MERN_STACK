@@ -2,10 +2,10 @@ import {
     apiRequest
 } from "./apiClient";
 
-export async function getHabits()
+export async function getHabits(userId)
 {
     const result =
-        await apiRequest("/habits");
+        await apiRequest(`/habits?userId=${userId}`);
 
     return result.habits || result;
 }
