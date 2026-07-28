@@ -423,11 +423,12 @@ app.post('/api/profile', async(req,res)=>{
 app.post('/api/habits', async(req,res)=>{
 
     const {
-    userId,
-    name,
-    description,
-    frequency
-} = req.body;
+        userId,
+        name,
+        description,
+        frequency,
+        category
+    } = req.body;
 
     if(!ObjectId.isValid(userId))
     {
@@ -470,6 +471,7 @@ app.post('/api/habits', async(req,res)=>{
         name:name,
         description: description,
         frequency:frequency,
+        category: category || "General",
         streak:0,
         completedToday:false,
         lastCompleted:null
@@ -847,7 +849,8 @@ app.put('/api/habits/:id', async(req,res)=>{
         userId,
         name,
         description,
-        frequency
+        frequency,
+        category
     } = req.body;
 
     if(!ObjectId.isValid(habitId))
@@ -871,7 +874,8 @@ app.put('/api/habits/:id', async(req,res)=>{
             $set:{
                 name,
                 description,
-                frequency
+                frequency,
+                category
             }
         }
     );

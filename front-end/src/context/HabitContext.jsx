@@ -105,6 +105,8 @@ export function HabitProvider({
 
     async function addHabit(habit)
     {
+        console.log("CONTEXT RECEIVED:", habit);
+
         const createdHabit =
         await createHabit({
             ...habit,

@@ -73,6 +73,8 @@ function HabitModal({
             return;
         }
 
+        console.log("MODAL SAVING:", habit);
+
         onSave({
         ...habit,
         name: trimmedName,

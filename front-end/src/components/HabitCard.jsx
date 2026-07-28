@@ -36,7 +36,7 @@ function HabitCard({
                 </div>
 
                 <span className="habit-category">
-                    {habit.category}
+                    Category: {habit.category || "NO CATEGORY"}
                 </span>
             </div>
 
