@@ -147,7 +147,7 @@ app.get('/api/auth/me', (req, res) => {
         success:true,
         user:{
             id:req.user._id.toString(),
-            username:req.user.username,
+            email:req.user.username,
             firstName:req.user.firstName,
             lastName:req.user.lastName
         }
@@ -256,7 +256,7 @@ app.post('/api/auth/login', async(req,res)=>{
         token: mockToken,
         user: {
             id: user._id.toString(),
-            username: user.username,
+            email: user.username,
             firstName: user.firstName,
             lastName: user.lastName
         }
