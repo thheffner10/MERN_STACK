@@ -31,7 +31,8 @@ export function TodoProvider({
 })
 {
     const {
-        isAuthenticated
+        isAuthenticated,
+        user
     } = useAuth();
 
     const [todos, setTodos] =
@@ -86,8 +87,12 @@ export function TodoProvider({
 
     async function addTodo(todo)
     {
+
         const createdTodo =
-            await createTodo(todo);
+        await createTodo({
+            ...todo,
+            userId: user.id
+        });
 
         setTodos((previous) => [
             ...previous,
@@ -102,9 +107,10 @@ export function TodoProvider({
     )
     {
         const savedTodo =
-            await editTodo(
-                updatedTodo
-            );
+            await editTodo({
+                ...updatedTodo,
+                userId: user.id
+            });
 
         const savedTodoId =
             getTodoId(savedTodo);
@@ -123,7 +129,7 @@ export function TodoProvider({
 
     async function deleteTodo(id)
     {
-        await removeTodo(id);
+        await removeTodo(id, user.id);
 
         setTodos((previous) =>
             previous.filter(

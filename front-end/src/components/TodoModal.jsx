@@ -21,7 +21,13 @@ function TodoModal({
     {
         if (existingTodo)
         {
-            setTodo(existingTodo);
+            setTodo({
+                title: "",
+                description: "",
+                priority: "Medium",
+                dueDate: "",
+                ...existingTodo
+            });
         }
         else
         {

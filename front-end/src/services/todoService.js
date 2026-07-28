@@ -41,14 +41,13 @@ export async function editTodo(todo)
     return result.task || result.todo || result;
 }
 
-export async function removeTodo(todoId,userId)
+export async function removeTodo(todoId, userId)
 {
     return apiRequest(
-        "/deletetask",
+        `/tasks/${todoId}`,
         {
-            method:"DELETE",
-            body:{
-                taskId:todoId,
+            method: "DELETE",
+            body: {
                 userId
             }
         }
@@ -64,7 +63,7 @@ export async function toggleTodoCompletion(
         await apiRequest(
             `/tasks/${todoId}/toggle`,
             {
-                method:"POST",
+                method:"PATCH",
                 body:{
                     userId
                 }

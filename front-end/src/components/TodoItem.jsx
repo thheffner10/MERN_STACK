@@ -25,7 +25,7 @@ todo.completed
 }
 >
 
-{todo.task}
+{todo.title}
 
 </span>
 

@@ -543,7 +543,8 @@ app.post('/api/tasks', async(req,res)=>{
         userId,
         title,
         description,
-        priority
+        priority,
+        dueDate
     } = req.body;
 
 
@@ -592,6 +593,8 @@ app.post('/api/tasks', async(req,res)=>{
         description:description || "",
 
         priority:priority || "Medium",
+
+        dueDate: dueDate || null,
 
         completed:false,
 
@@ -670,7 +673,8 @@ app.put('/api/tasks/:id', async(req,res)=>{
         userId,
         title,
         description,
-        priority
+        priority,
+        dueDate
     } = req.body;
 
 
@@ -693,7 +697,8 @@ app.put('/api/tasks/:id', async(req,res)=>{
             $set:{
                 title,
                 description,
-                priority
+                priority,
+                dueDate
             }
 
         });
@@ -744,9 +749,8 @@ app.delete('/api/tasks/:id', async(req,res)=>{
     const result =
         await db.collection('Tasks')
         .deleteOne({
-
-            _id:new ObjectId(taskId)
-
+            _id:new ObjectId(taskId),
+            userId:userId
         });
 
 
@@ -771,12 +775,13 @@ app.patch('/api/tasks/:id/toggle', async(req,res)=>{
 
 
 
+    const {userId} = req.body;
+
     const task =
         await db.collection('Tasks')
         .findOne({
-
-            _id:new ObjectId(taskId)
-
+            _id:new ObjectId(taskId),
+            userId:userId
         });
 
 
@@ -792,11 +797,10 @@ app.patch('/api/tasks/:id/toggle', async(req,res)=>{
 
 
     await db.collection('Tasks')
-    .updateOne(
-
-        {
-            _id:new ObjectId(taskId)
-        },
+    .updateOne({
+        _id:new ObjectId(taskId),
+        userId:userId
+    },
 
         {
             $set:{
@@ -932,21 +936,9 @@ app.delete('/api/deletehabit', async(req,res)=>{
 
 });
 
-app.post('/api/habits/:id/toggle', async (req, res) => {
-
+app.post('/api/habits/:id/toggle', async(req,res)=>{
     const habitId = req.params.id;
-    const { userId } = req.body;
-
-    console.log(req.body);
-console.log(req.params.id);
-
-    if(!ObjectId.isValid(habitId))
-    {
-        return res.json({
-            success:false,
-            message:"Invalid habit ID"
-        });
-    }
+    const { userId, date } = req.body;
 
     const db = client.db('HabitTracker');
 
@@ -955,7 +947,6 @@ console.log(req.params.id);
             _id:new ObjectId(habitId),
             userId:userId
         });
-
 
     if(!habit)
     {
@@ -966,69 +957,52 @@ console.log(req.params.id);
     }
 
 
-    const today = new Date().toISOString().split("T")[0];
+    let completions = habit.completions || [];
 
 
-    const lastDate = habit.lastCompleted
-        ? new Date(habit.lastCompleted).toISOString().split("T")[0]
-        : null;
-
-
-    // Already completed today
-    if(lastDate === today)
+    if(completions.includes(date))
     {
-        return res.json({
-            success:false,
-            message:"Already completed today"
-        });
-    }
-
-    let newStreak;
-
-
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const yesterdayString = yesterday.toISOString().split("T")[0];
-
-
-    if(lastDate === yesterdayString)
-    {
-        // Continued streak
-        newStreak = habit.streak + 1;
+        // Undo completion
+        completions =
+            completions.filter(
+                item => item !== date
+            );
     }
     else
     {
-        // Missed a day, restart streak
-        newStreak = 1;
+        // Complete today
+        completions.push(date);
     }
 
 
     await db.collection('Habits')
         .updateOne(
             {
-                _id:new ObjectId(habitId),
-                userId:userId
+                _id:new ObjectId(habitId)
             },
             {
                 $set:{
-                    streak:newStreak,
-                    completedToday:true,
-                    lastCompleted:new Date()
+                    completions
                 }
             }
         );
 
 
-    const updatedHabit = await db.collection("Habits").findOne({
-    _id: new ObjectId(habitId)
-    });
+    const updatedHabit =
+        await db.collection('Habits')
+        .findOne({
+            _id:new ObjectId(habitId)
+        });
+
 
     res.json({
-        success: true,
-        habit: updatedHabit
+        success:true,
+        habit:{
+            ...updatedHabit,
+            id:updatedHabit._id.toString(),
+            _id:updatedHabit._id.toString()
+        }
     });
-
 });
 
 const PORT = process.env.PORT || 5000;

@@ -53,6 +53,16 @@ Priority:
 
 </div>
 
+<div>
+    Due Date:
+
+    <strong>
+        {todo.dueDate
+            ? todo.dueDate
+            : "No due date"}
+    </strong>
+</div>
+
 
 
 <div className="card-actions">
