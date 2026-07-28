@@ -114,26 +114,24 @@ function Settings()
         );
     }
 
-    function clearLocalApplicationData()
-    {
-        const confirmed =
-            window.confirm(
-                "Clear your locally stored habits, tasks, and preferences? This action cannot be undone."
-            );
-
-        if (!confirmed)
-        {
-            return;
-        }
-
-        clearHabits();
-        clearTodos();
-        clearSettings();
-
-        setMessage(
-            "Your local application data has been cleared."
+function clearLocalApplicationData()
+{
+    const confirmed =
+        window.confirm(
+            "Clear your locally stored preferences? Your saved habits and tasks will not be deleted."
         );
+
+    if (!confirmed)
+    {
+        return;
     }
+
+    clearSettings();
+
+    setMessage(
+        "Your local preferences have been cleared."
+    );
+}
 
     const initials =
         formData.displayName
@@ -379,9 +377,9 @@ function Settings()
                         <h2>Local Data</h2>
 
                         <p>
-                            Remove your locally saved
-                            habits, tasks, and
-                            preferences.
+                        Remove preferences saved locally
+                        in this browser. Habits and tasks
+                        stored by your account will remain.
                         </p>
 
                         <button
