@@ -1,6 +1,8 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 function Landing()
 {
+    const navigate = useNavigate();
 
     return (
 
@@ -26,10 +28,10 @@ function Landing()
                 </p>
 
 
-                <button>
-
+                <button
+                    onClick={() => navigate("/register")}
+                >
                     Get Started
-
                 </button>
 
 
