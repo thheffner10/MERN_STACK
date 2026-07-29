@@ -221,37 +221,10 @@ export function AuthProvider({
         }
     }
 
-    async function loginWithGoogle(
-        credential
-    )
-    {
-        setLoading(true);
-
-        try
-        {
-            const result =
-                await googleOAuthLogin(
-                    credential
-                );
-
-            setUser(result.user);
-            setToken(result.token);
-            setRememberMe(true);
-
-            saveAuthentication({
-                user: result.user,
-                token: result.token,
-                rememberMe: true
-            });
-
-            return result;
-        }
-        finally
-        {
-            setLoading(false);
-        }
-    }
-
+function loginWithGoogle()
+{
+    googleOAuthLogin();
+}
     function updateAuthenticatedUser(
         changes
     )
@@ -304,10 +277,8 @@ export function AuthProvider({
                 token,
                 loading,
 
-                isAuthenticated:
-                    Boolean(
-                        user && token
-                    ),
+isAuthenticated:
+    Boolean(user),
 
                 login,
                 register,

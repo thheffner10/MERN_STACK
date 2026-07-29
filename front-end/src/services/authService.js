@@ -201,23 +201,10 @@ export async function resendVerificationEmail(
     );
 }
 
-export async function googleOAuthLogin(
-    credential
-)
+export function googleOAuthLogin()
 {
-    return apiRequest(
-        "/auth/google",
-        {
-            method: "POST",
-
-            body: {
-                credential
-            },
-
-            requiresAuthentication:
-                false
-        }
-    );
+    window.location.href =
+        "https://tncis4004.xyz/auth/google";
 }
 
 export async function getCurrentUser()

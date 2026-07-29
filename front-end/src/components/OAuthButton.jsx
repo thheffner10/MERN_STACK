@@ -40,56 +40,10 @@ function OAuthButton({
             ? "Sign up with Google"
             : "Sign in with Google";
 
-    async function handleGoogleLogin()
-    {
-        setLoading(true);
-        setError("");
-
-        try
-        {
-            /*
-             * The completed Google Identity
-             * Services integration will pass
-             * Google's credential token here.
-             */
-            await loginWithGoogle();
-
-            const destination =
-                location.state?.from ||
-                "/dashboard";
-
-            navigate(
-                destination,
-                {
-                    replace: true
-                }
-            );
-        }
-        catch (requestError)
-        {
-            if (
-                requestError.message ===
-                "Failed to fetch"
-            )
-            {
-                setError(
-                    "Unable to connect to the authentication server."
-                );
-            }
-            else
-            {
-                setError(
-                    requestError.message ||
-                    "Google authentication failed."
-                );
-            }
-        }
-        finally
-        {
-            setLoading(false);
-        }
-    }
-
+function handleGoogleLogin()
+{
+    loginWithGoogle();
+}
     return (
         <>
             <button
