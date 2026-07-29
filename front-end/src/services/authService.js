@@ -54,12 +54,7 @@ export async function loginUser(
     /*
      * Development-only login bypass.
      *
-     * Works only with:
-     *
-     * npm run dev
-     *
-     * import.meta.env.DEV is false
-     * in production builds.
+     * Works only in development mode.
      */
 
     if (
@@ -70,11 +65,7 @@ export async function loginUser(
     {
         return {
             user: DEV_BYPASS_USER,
-            token:
-                "development-bypass-token",
-
-            requiresVerification:
-                false
+            requiresVerification: false
         };
     }
 
@@ -112,12 +103,10 @@ export async function registerUser(
 
             body: {
                 firstName:
-                    formData.firstName
-                        .trim(),
+                    formData.firstName.trim(),
 
                 lastName:
-                    formData.lastName
-                        .trim(),
+                    formData.lastName.trim(),
 
                 email:
                     normalizeEmail(
@@ -166,9 +155,9 @@ export async function resetUserPassword({
         {
             method: "POST",
 
-            body:{
+            body: {
                 token,
-                newPassword:password
+                newPassword: password
             },
 
             requiresAuthentication:
@@ -219,6 +208,13 @@ export async function resendVerificationEmail(
 }
 
 
+/*
+ * Passport Google OAuth login.
+ *
+ * This does not return a token or user object.
+ * Passport handles authentication through
+ * the Express session cookie.
+ */
 export function googleOAuthLogin()
 {
     window.location.href =
@@ -226,9 +222,33 @@ export function googleOAuthLogin()
 }
 
 
+/*
+ * Retrieves the currently authenticated user
+ * from the Passport session.
+ */
 export async function getCurrentUser()
 {
     return apiRequest(
-        "/auth/me"
+        "/auth/me",
+        {
+            method: "GET",
+            requiresAuthentication: true
+        }
+    );
+}
+
+
+/*
+ * Logs the user out through Passport.
+ * This clears the Express session.
+ */
+export async function logoutUser()
+{
+    return apiRequest(
+        "/auth/logout",
+        {
+            method: "POST",
+            requiresAuthentication: true
+        }
     );
 }

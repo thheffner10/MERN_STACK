@@ -1,159 +1,66 @@
+```javascript
 import React, {
     createContext,
     useContext,
-    useMemo,
+    useEffect,
     useState
 } from "react";
 
 import {
-    googleOAuthLogin,
     loginUser,
-    registerUser
+    registerUser,
+    googleOAuthLogin,
+    getCurrentUser,
+    logoutUser
 } from "../services/authService";
+
 
 const AuthContext =
     createContext(null);
 
-const LOCAL_AUTH_STORAGE_KEY =
-    "habit-tracker-auth";
-
-const SESSION_AUTH_STORAGE_KEY =
-    "habit-tracker-session-auth";
-
-function parseStoredAuthentication(
-    value
-)
-{
-    if (!value)
-    {
-        return {
-            user: null,
-            token: null
-        };
-    }
-
-    try
-    {
-        const parsed =
-            JSON.parse(value);
-
-        return {
-            user:
-                parsed.user || null,
-
-            token:
-                parsed.token || null
-        };
-    }
-    catch
-    {
-        return {
-            user: null,
-            token: null
-        };
-    }
-}
-
-function readStoredAuthentication()
-{
-    const localValue =
-        localStorage.getItem(
-            LOCAL_AUTH_STORAGE_KEY
-        );
-
-    if (localValue)
-    {
-        return {
-            ...parseStoredAuthentication(
-                localValue
-            ),
-
-            rememberMe: true
-        };
-    }
-
-    const sessionValue =
-        sessionStorage.getItem(
-            SESSION_AUTH_STORAGE_KEY
-        );
-
-    return {
-        ...parseStoredAuthentication(
-            sessionValue
-        ),
-
-        rememberMe: false
-    };
-}
-
-function clearAuthenticationStorage()
-{
-    localStorage.removeItem(
-        LOCAL_AUTH_STORAGE_KEY
-    );
-
-    sessionStorage.removeItem(
-        SESSION_AUTH_STORAGE_KEY
-    );
-}
-
-function saveAuthentication({
-    user,
-    token,
-    rememberMe
-})
-{
-    clearAuthenticationStorage();
-
-    const storage =
-        rememberMe
-            ? localStorage
-            : sessionStorage;
-
-    const storageKey =
-        rememberMe
-            ? LOCAL_AUTH_STORAGE_KEY
-            : SESSION_AUTH_STORAGE_KEY;
-
-    storage.setItem(
-        storageKey,
-        JSON.stringify({
-            user,
-            token
-        })
-    );
-}
 
 export function AuthProvider({
     children
 })
 {
-    const initialAuthentication =
-        useMemo(
-            () =>
-                readStoredAuthentication(),
-            []
-        );
-
     const [user, setUser] =
-        useState(
-            initialAuthentication.user
-        );
-
-    const [token, setToken] =
-        useState(
-            initialAuthentication.token
-        );
-
-    const [
-        rememberMe,
-        setRememberMe
-    ] = useState(
-        initialAuthentication.rememberMe
-    );
+        useState(null);
 
     const [loading, setLoading] =
-        useState(false);
+        useState(true);
+
+
+    /*
+     * Check whether a Passport session
+     * already exists when the app loads.
+     */
+    useEffect(() =>
+    {
+        async function loadCurrentUser()
+        {
+            try
+            {
+                const currentUser =
+                    await getCurrentUser();
+
+                setUser(currentUser);
+            }
+            catch(error)
+            {
+                setUser(null);
+            }
+            finally
+            {
+                setLoading(false);
+            }
+        }
+
+
+        loadCurrentUser();
+
+    }, []);
+
+
 
     async function login(credentials)
     {
@@ -166,6 +73,7 @@ export function AuthProvider({
                     credentials
                 );
 
+
             if (
                 result.requiresVerification
             )
@@ -173,29 +81,11 @@ export function AuthProvider({
                 return result;
             }
 
-            const nextUser =
-                result.user;
 
-            const nextToken =
-                result.token;
-
-            const shouldRemember =
-                Boolean(
-                    credentials.rememberMe
-                );
-
-            setUser(nextUser);
-            setToken(nextToken);
-            setRememberMe(
-                shouldRemember
+            setUser(
+                result.user
             );
 
-            saveAuthentication({
-                user: nextUser,
-                token: nextToken,
-                rememberMe:
-                    shouldRemember
-            });
 
             return result;
         }
@@ -204,6 +94,8 @@ export function AuthProvider({
             setLoading(false);
         }
     }
+
+
 
     async function register(formData)
     {
@@ -221,36 +113,61 @@ export function AuthProvider({
         }
     }
 
-    async function loginWithGoogle(
-        credential
-    )
-    {
-        setLoading(true);
 
+
+    /*
+     * Passport Google OAuth.
+     *
+     * This redirects the browser
+     * to the backend.
+     *
+     * Authentication completion happens
+     * through the Passport callback route.
+     */
+    function loginWithGoogle()
+    {
+        googleOAuthLogin();
+    }
+
+
+
+    /*
+     * Refresh the user after OAuth redirect
+     * or any authentication change.
+     */
+    async function refreshUser()
+    {
         try
         {
-            const result =
-                await googleOAuthLogin(
-                    credential
-                );
+            const currentUser =
+                await getCurrentUser();
 
-            setUser(result.user);
-            setToken(result.token);
-            setRememberMe(true);
+            setUser(currentUser);
 
-            saveAuthentication({
-                user: result.user,
-                token: result.token,
-                rememberMe: true
-            });
+            return currentUser;
+        }
+        catch(error)
+        {
+            setUser(null);
+            return null;
+        }
+    }
 
-            return result;
+
+
+    async function logout()
+    {
+        try
+        {
+            await logoutUser();
         }
         finally
         {
-            setLoading(false);
+            setUser(null);
         }
     }
+
+
 
     function updateAuthenticatedUser(
         changes
@@ -263,23 +180,15 @@ export function AuthProvider({
                 return null;
             }
 
-            const updatedUser = {
+
+            return {
                 ...previousUser,
                 ...changes
             };
-
-            if (token)
-            {
-                saveAuthentication({
-                    user: updatedUser,
-                    token,
-                    rememberMe
-                });
-            }
-
-            return updatedUser;
         });
     }
+
+
 
     function markEmailVerified()
     {
@@ -288,32 +197,30 @@ export function AuthProvider({
         });
     }
 
-    function logout()
-    {
-        clearAuthenticationStorage();
 
-        setUser(null);
-        setToken(null);
-        setRememberMe(false);
-    }
 
     return (
         <AuthContext.Provider
             value={{
                 user,
-                token,
+
                 loading,
 
                 isAuthenticated:
-                    Boolean(
-                        user && token
-                    ),
+                    Boolean(user),
 
                 login,
+
                 register,
+
                 loginWithGoogle,
+
                 logout,
+
+                refreshUser,
+
                 updateAuthenticatedUser,
+
                 markEmailVerified
             }}
         >
@@ -322,10 +229,13 @@ export function AuthProvider({
     );
 }
 
+
+
 export function useAuth()
 {
     const context =
         useContext(AuthContext);
+
 
     if (!context)
     {
@@ -334,5 +244,7 @@ export function useAuth()
         );
     }
 
+
     return context;
 }
+```
