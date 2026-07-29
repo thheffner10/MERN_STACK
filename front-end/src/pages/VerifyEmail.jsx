@@ -1,7 +1,6 @@
 import React, {
     useEffect,
-    useState,
-    useRef
+    useState
 } from "react";
 
 import {
@@ -15,22 +14,19 @@ import {
     verifyUserEmail
 } from "../services/authService";
 
-
 function VerifyEmail()
 {
-    const location = useLocation();
+    const location =
+        useLocation();
 
     const [searchParams] =
         useSearchParams();
 
-
     const token =
         searchParams.get("token");
 
-
     const email =
         location.state?.email || "";
-
 
     const [status, setStatus] =
         useState(
@@ -39,82 +35,79 @@ function VerifyEmail()
                 : "waiting"
         );
 
-
     const [message, setMessage] =
         useState("");
-
 
     const [error, setError] =
         useState("");
 
-
     const [resending, setResending] =
         useState(false);
 
-    const verificationStarted = useRef(false);
-
     useEffect(() =>
     {
-        if (!token || verificationStarted.current)
+        if (!token)
         {
             return;
         }
 
-        verificationStarted.current = true;
-
+        let active = true;
 
         async function verify()
         {
             try
             {
                 const result =
-                    await verifyUserEmail(token);
+                    await verifyUserEmail(
+                        token
+                    );
 
+                if (active)
+                {
+                    setMessage(
+                        result.message ||
+                        "Your email has been verified."
+                    );
 
-                setMessage(
-                    result.message
-                );
-
-                setStatus(
-                    "verified"
-                );
+                    setStatus("verified");
+                }
             }
-            catch(requestError)
+            catch (requestError)
             {
-                setError(
-                    requestError.message ||
-                    "Verification failed."
-                );
+                if (active)
+                {
+                    setError(
+                        requestError.message ||
+                        "The verification link is invalid or expired."
+                    );
 
-                setStatus(
-                    "error"
-                );
+                    setStatus("error");
+                }
             }
         }
 
-
         verify();
 
+        return () =>
+        {
+            active = false;
+        };
     }, [token]);
 
     async function handleResend()
     {
-        if(!email)
+        if (!email)
         {
             setError(
-                "Unable to resend verification email. Please register again."
+                "No email address was provided. Return to login or registration and try again."
             );
 
             return;
         }
 
-
         setResending(true);
-
         setError("");
-
         setMessage("");
-
 
         try
         {
@@ -123,16 +116,16 @@ function VerifyEmail()
                     email
                 );
 
-
             setMessage(
-                result.message
+                result.message ||
+                "A new verification email has been sent."
             );
         }
-        catch(requestError)
+        catch (requestError)
         {
             setError(
                 requestError.message ||
-                "Unable to resend verification email."
+                "Unable to resend the verification email."
             );
         }
         finally
@@ -141,164 +134,114 @@ function VerifyEmail()
         }
     }
 
-
-
     return (
         <main className="auth-page">
-
             <section className="auth-container">
-
-
-                <div className="verification-icon">
-                    {
-                        status === "verified"
-                            ? "✓"
-                            : "✉"
-                    }
+                <div
+                    className="verification-icon"
+                    aria-hidden="true"
+                >
+                    {status === "verified"
+                        ? "✓"
+                        : "✉"}
                 </div>
 
-
-
                 <div className="auth-heading">
-
                     <p className="page-eyebrow">
                         Email verification
                     </p>
 
-
                     <h1>
-                        {
-                            status === "verified"
-                                ? "Email Verified"
-                                : "Check Your Email"
-                        }
+                        {status === "verified"
+                            ? "Email Verified"
+                            : status === "error"
+                                ? "Verification Failed"
+                                : "Check Your Email"}
                     </h1>
 
-
                     <p>
+                        {status === "verifying" &&
+                            "We are verifying your email address."}
 
-                        {
-                            status === "verifying" &&
-                            "We are verifying your email address."
-                        }
-
-
-                        {
-                            status === "waiting" &&
-                            `A verification message was sent${
+                        {status === "waiting" &&
+                            (
                                 email
-                                    ? ` to ${email}`
-                                    : ""
-                            }.`
-                        }
+                                    ? `A verification message was sent to ${email}.`
+                                    : "Open the verification link sent to your email address."
+                            )}
 
+                        {status === "verified" &&
+                            "Your account is ready to use."}
 
-                        {
-                            status === "verified" &&
-                            "Your account is ready to use."
-                        }
-
-
-                        {
-                            status === "error" &&
-                            "The verification link could not be completed."
-                        }
-
+                        {status === "error" &&
+                            "The verification link could not be completed."}
                     </p>
-
                 </div>
 
+                {status === "verifying" && (
+                    <p
+                        className="form-message info"
+                        role="status"
+                    >
+                        Verifying email...
+                    </p>
+                )}
 
+                {message && (
+                    <p
+                        className="form-message success"
+                        role="status"
+                    >
+                        {message}
+                    </p>
+                )}
 
-                {
-                    status === "verifying" && (
+                {error && (
+                    <p
+                        className="form-message error"
+                        role="alert"
+                    >
+                        {error}
+                    </p>
+                )}
 
-                        <p
-                            className="form-message info"
-                            role="status"
-                        >
-                            Verifying email...
-                        </p>
+                {status === "waiting" && (
+                    <button
+                        type="button"
+                        className="auth-submit-button"
+                        onClick={handleResend}
+                        disabled={
+                            resending ||
+                            !email
+                        }
+                    >
+                        {resending
+                            ? "Sending..."
+                            : "Resend Verification"}
+                    </button>
+                )}
 
-                    )
-                }
-
-
-
-
-                {
-                    message && (
-
-                        <p
-                            className="form-message success"
-                            role="status"
-                        >
-                            {message}
-                        </p>
-
-                    )
-                }
-
-
-
-
-
-                {
-                    error && (
-
-                        <p
-                            className="form-message error"
-                            role="alert"
-                        >
-                            {error}
-                        </p>
-
-                    )
-                }
-
-
-
-
-
-                {
-                    status === "waiting" && (
-
-                        <button
-                            type="button"
-                            className="auth-submit-button"
-                            onClick={handleResend}
-                            disabled={resending}
-                        >
-
-                            {
-                                resending
-                                    ? "Sending..."
-                                    : "Resend Verification"
-                            }
-
-                        </button>
-
-                    )
-                }
-
-
-
+                {status === "error" && email && (
+                    <button
+                        type="button"
+                        className="auth-submit-button"
+                        onClick={handleResend}
+                        disabled={resending}
+                    >
+                        {resending
+                            ? "Sending..."
+                            : "Send a New Verification Link"}
+                    </button>
+                )}
 
                 <p className="auth-footer-text">
-
                     <Link to="/login">
                         Return to login
                     </Link>
-
                 </p>
-
-
             </section>
-
-
         </main>
     );
 }
-
 
 export default VerifyEmail;
