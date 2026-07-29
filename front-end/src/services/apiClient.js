@@ -141,7 +141,9 @@ export async function apiRequest(
                     : body instanceof FormData
                         ? body
                         : JSON.stringify(body),
-
+            
+            credentials: "include",
+            
             signal
         }
     );
