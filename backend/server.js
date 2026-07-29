@@ -19,11 +19,21 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({ 
-service: "gmail", 
-auth: { 
-user: process.env.EMAIL_USER, 
-pass: process.env.EMAIL_PASSWORD
- } 
+    service: "gmail", 
+    auth: { 
+        user: process.env.EMAIL_USER, 
+        pass: process.env.EMAIL_PASSWORD
+    } 
+});
+
+
+transporter.verify((error, success) => {
+    if (error) {
+        console.error("Email transporter error:", error);
+    } 
+    else {
+        console.log("Email transporter is ready");
+    }
 });
 
 
@@ -222,65 +232,67 @@ app.post('/api/auth/register', async(req,res)=>{
     const hashedPassword = await bcrypt.hash(password,10);
 
 
-const verifyToken =
-    crypto.randomBytes(32).toString('hex');
+    const verifyToken =
+        crypto.randomBytes(32).toString('hex');
 
 
-const verifyExpires =
-    new Date();
+    const verifyExpires =
+        new Date();
 
 
-verifyExpires.setHours(
-    verifyExpires.getHours() + 1
-);
+    verifyExpires.setHours(
+        verifyExpires.getHours() + 1
+    );
 
 
-await db.collection('Users').insertOne({
-    firstName:firstName,
-    lastName:lastName,
-    username:email,
-    password:hashedPassword,
-    authProvider:"local",
+    await db.collection('Users').insertOne({
+        firstName:firstName,
+        lastName:lastName,
+        username:email,
+        password:hashedPassword,
+        authProvider:"local",
 
-    isVerified:false,
+        isVerified:false,
 
-    verifyToken:verifyToken,
+        verifyToken:verifyToken,
 
-    verifyExpires:verifyExpires
-});
+        verifyExpires:verifyExpires
+    });
+
+    const verificationURL =
+        `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
+
+
+    await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+
+        to: email,
+
+        subject: "Verify your Habit Tracker account",
+
+        html: `
+            <h2>Welcome ${firstName}!</h2>
+
+            <p>
+                Please verify your email address
+                to activate your account.
+            </p>
+
+            <a href="${verificationURL}">
+                Verify Email
+            </a>
+
+            <p>
+                This link expires in 1 hour.
+            </p>
+        `
+    });
+
     res.json({
         success:true,
         message:"User created"
     });
 
-const verificationURL =
-    `https://tncis4004.xyz/verify-email?token=${verifyToken}`;
-
-
-await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-
-    to: email,
-
-    subject: "Verify your Habit Tracker account",
-
-    html: `
-        <h2>Welcome ${firstName}!</h2>
-
-        <p>
-            Please verify your email address
-            to activate your account.
-        </p>
-
-        <a href="${verificationURL}">
-            Verify Email
-        </a>
-
-        <p>
-            This link expires in 1 hour.
-        </p>
-    `
-});
 });
 
 app.post('/api/auth/resend-verification', async(req,res)=>{
@@ -353,15 +365,15 @@ app.post('/api/auth/resend-verification', async(req,res)=>{
 
 
 
+    try {
+
     await transporter.sendMail({
 
-        from:process.env.EMAIL_USER,
-
-        to:user.username,
-
+        from: process.env.EMAIL_USER,
+        to: email,
         subject:"Verify your Habit Tracker account",
 
-        html:`
+        html: `
             <h2>Email Verification</h2>
 
             <p>
@@ -374,7 +386,16 @@ app.post('/api/auth/resend-verification', async(req,res)=>{
         `
     });
 
+    }
+    catch(error)
+    {
+        console.error("Email error:", error);
 
+        return res.json({
+            success:false,
+            message:"Account created but verification email failed."
+        });
+    }
 
     res.json({
         success:true,

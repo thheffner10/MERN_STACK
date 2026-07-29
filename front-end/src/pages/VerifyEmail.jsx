@@ -1,6 +1,7 @@
 import React, {
     useEffect,
-    useState
+    useState,
+    useRef
 } from "react";
 
 import {
@@ -50,17 +51,16 @@ function VerifyEmail()
     const [resending, setResending] =
         useState(false);
 
-
+    const verificationStarted = useRef(false);
 
     useEffect(() =>
     {
-        if (!token)
+        if (!token || verificationStarted.current)
         {
             return;
         }
 
-
-        let active = true;
+        verificationStarted.current = true;
 
 
         async function verify()
@@ -68,51 +68,34 @@ function VerifyEmail()
             try
             {
                 const result =
-                    await verifyUserEmail(
-                        token
-                    );
+                    await verifyUserEmail(token);
 
 
-                if(active)
-                {
-                    setMessage(
-                        result.message
-                    );
+                setMessage(
+                    result.message
+                );
 
-                    setStatus(
-                        "verified"
-                    );
-                }
+                setStatus(
+                    "verified"
+                );
             }
             catch(requestError)
             {
-                if(active)
-                {
-                    setError(
-                        requestError.message ||
-                        "Verification failed."
-                    );
+                setError(
+                    requestError.message ||
+                    "Verification failed."
+                );
 
-                    setStatus(
-                        "error"
-                    );
-                }
+                setStatus(
+                    "error"
+                );
             }
         }
 
 
         verify();
 
-
-        return () =>
-        {
-            active = false;
-        };
-
-
     }, [token]);
-
-
 
     async function handleResend()
     {

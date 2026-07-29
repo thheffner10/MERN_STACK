@@ -166,9 +166,9 @@ export async function resetUserPassword({
         {
             method: "POST",
 
-            body: {
+            body:{
                 token,
-                password
+                newPassword:password
             },
 
             requiresAuthentication:
