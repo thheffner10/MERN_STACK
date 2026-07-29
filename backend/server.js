@@ -12,34 +12,12 @@ async function connectDB()
 
 const express = require('express');
 const cors = require('cors');
+const app = express();
 const bcrypt = require('bcrypt');
 const passport = require('passport');
 const session = require('express-session');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 
-const transporter = nodemailer.createTransport({ 
-    service: "gmail", 
-    auth: { 
-        user: process.env.EMAIL_USER, 
-        pass: process.env.EMAIL_PASSWORD
-    } 
-});
-
-
-transporter.verify((error, success) => {
-    if (error) {
-        console.error("Email transporter error:", error);
-    } 
-    else {
-        console.log("Email transporter is ready");
-    }
-});
-
-
-const app = express();
-
-app.set("trust proxy", 1);
 
 app.use(express.json());
 
@@ -58,7 +36,7 @@ app.use(session({
     cookie:{
         secure:true,
         httpOnly:true,
-        sameSite:"none"
+        sameSite:"lax"
     }
 }));
 
@@ -87,15 +65,16 @@ async(accessToken, refreshToken, profile, done)=>{
 
     if(!user)
     {
-const newUser =
-{
-    googleId:profile.id,
-    username:profile.emails[0].value,
-    firstName:profile.name.givenName,
-    lastName:profile.name.familyName,
-    authProvider:"google",
-    isVerified:true
-};
+        const newUser =
+        {
+            googleId:profile.id,
+            username:profile.emails[0].value,
+            firstName:profile.name.givenName,
+            lastName:profile.name.familyName,
+            authProvider:"google"
+        };
+
+
         const result =
             await db.collection('Users')
             .insertOne(newUser);
@@ -113,74 +92,44 @@ const newUser =
 }));
 
 passport.serializeUser((user,done)=>{
-    console.log("Serializing user:", user);
-
     done(null,user._id.toString());
 });
+passport.deserializeUser(async(id,done)=>{
 
-passport.deserializeUser(async (id, done) => {
+    const db = client.db('HabitTracker');
 
-    console.log("Deserializing user:", id);
-
-    const db = client.db("HabitTracker");
-
-    if (!ObjectId.isValid(id))
+    if(!ObjectId.isValid(id))
     {
         return done(null, false);
     }
 
-    const user = await db.collection("Users")
+    const user = await db.collection('Users')
         .findOne({
-            _id: new ObjectId(id)
+            _id:new ObjectId(id)
         });
 
-    done(null, user);
+    done(null,user);
 
 });
 
-app.get('/api/auth/google',
+app.get('/auth/google',
 passport.authenticate('google',
 {
     scope:['profile','email']
 }));
 
-app.get(
-    '/api/auth/google/callback',
-    passport.authenticate('google', {
-        failureRedirect: "https://tncis4004.xyz/login",
-        session: true
-    }),
-    (req, res) => {
+app.get('/auth/google/callback',
+passport.authenticate('google',
+{
+    failureRedirect:"https://tncis4004.xyz/login"
+}),
+(req,res)=>{
 
-        console.log("Callback user:", req.user);
-        console.log("Callback session:", req.session);
+    res.redirect(
+        "https://tncis4004.xyz/dashboard"
+    );
 
-        req.login(req.user, (err) => {
-
-            if (err) {
-                console.error("Login session error:", err);
-                return res.redirect(
-                    "https://tncis4004.xyz/login"
-                );
-            }
-
-            req.session.save(() => {
-
-                console.log(
-                    "Session saved successfully"
-                );
-
-                res.redirect(
-                    "https://tncis4004.xyz/dashboard"
-                );
-
-            });
-
-        });
-
-    }
-);
-
+});
 app.get('/api/auth/me', (req, res) => {
 
     if (!req.user)
@@ -231,62 +180,14 @@ app.post('/api/auth/register', async(req,res)=>{
 
     const hashedPassword = await bcrypt.hash(password,10);
 
-
-    const verifyToken =
-        crypto.randomBytes(32).toString('hex');
-
-
-    const verifyExpires =
-        new Date();
-
-
-    verifyExpires.setHours(
-        verifyExpires.getHours() + 1
-    );
-
-
     await db.collection('Users').insertOne({
         firstName:firstName,
         lastName:lastName,
         username:email,
         password:hashedPassword,
-        authProvider:"local",
-
-        isVerified:false,
-
-        verifyToken:verifyToken,
-
-        verifyExpires:verifyExpires
+        authProvider:"local"
     });
 
-    const verificationURL =
-        `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
-
-
-    await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-
-        to: email,
-
-        subject: "Verify your Habit Tracker account",
-
-        html: `
-            <h2>Welcome ${firstName}!</h2>
-
-            <p>
-                Please verify your email address
-                to activate your account.
-            </p>
-
-            <a href="${verificationURL}">
-                Verify Email
-            </a>
-
-            <p>
-                This link expires in 1 hour.
-            </p>
-        `
-    });
 
     res.json({
         success:true,
@@ -295,194 +196,22 @@ app.post('/api/auth/register', async(req,res)=>{
 
 });
 
-app.post('/api/auth/resend-verification', async(req,res)=>{
-
-    const {email} = req.body;
-
-
-    const db = client.db('HabitTracker');
-
-
-    const user =
-        await db.collection('Users')
-        .findOne({
-            username:email
-        });
-
-
-
-    if(!user)
-    {
-        return res.json({
-            success:false,
-            message:"User not found"
-        });
-    }
-
-
-
-    if(user.isVerified)
-    {
-        return res.json({
-            success:false,
-            message:"Email already verified"
-        });
-    }
-
-
-
-    const verifyToken =
-        crypto.randomBytes(32).toString('hex');
-
-
-    const verifyExpires =
-        new Date();
-
-
-    verifyExpires.setHours(
-        verifyExpires.getHours() + 1
-    );
-
-
-
-    await db.collection('Users')
-    .updateOne(
-        {
-            _id:user._id
-        },
-        {
-            $set:{
-                verifyToken,
-                verifyExpires
-            }
-        }
-    );
-
-
-
-    const verificationURL =
-        `https://tncis4004.xyz/verify-email?token=${verifyToken}`;
-
-
-
-    try {
-
-    await transporter.sendMail({
-
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject:"Verify your Habit Tracker account",
-
-        html: `
-            <h2>Email Verification</h2>
-
-            <p>
-                Click the link below to verify your account.
-            </p>
-
-            <a href="${verificationURL}">
-                Verify Email
-            </a>
-        `
-    });
-
-    }
-    catch(error)
-    {
-        console.error("Email error:", error);
-
-        return res.json({
-            success:false,
-            message:"Account created but verification email failed."
-        });
-    }
+app.post('/api/auth/resend-verification', async (req, res) => {
+    const { username } = req.body;
 
     res.json({
-        success:true,
-        message:"A new verification link has been sent."
+        success: true,
+        message: `A new verification link has been sent to ${username || 'your email'}.`
     });
 
 });
-app.post('/api/auth/verify-email', async(req,res)=>{
 
-    const {token} = req.body;
-
-
-    if(!token)
-    {
-        return res.json({
-            success:false,
-            message:"Missing verification token"
-        });
-    }
-
-
-    const db = client.db('HabitTracker');
-
-
-    const user =
-        await db.collection('Users')
-        .findOne({
-            verifyToken:token
-        });
-
-
-
-    if(!user)
-    {
-        return res.json({
-            success:false,
-            message:"Invalid verification token"
-        });
-    }
-
-
-
-    if(
-        new Date() >
-        new Date(user.verifyExpires)
-    )
-    {
-        return res.json({
-            success:false,
-            message:"Verification token expired"
-        });
-    }
-
-
-
-    if(user.isVerified)
-    {
-        return res.json({
-            success:false,
-            message:"Email already verified"
-        });
-    }
-
-
-
-    await db.collection('Users')
-    .updateOne(
-        {
-            _id:user._id
-        },
-        {
-            $set:{
-                isVerified:true
-            },
-
-            $unset:{
-                verifyToken:"",
-                verifyExpires:""
-            }
-        }
-    );
-
-
+app.post('/api/auth/verify-email', async (req, res) => {
+    const { token } = req.body;
 
     res.json({
-        success:true,
-        message:"Email successfully verified! You can now log in."
+        success: true,
+        message: "Email successfully verified! You can now log in."
     });
 
 });
@@ -518,17 +247,7 @@ app.post('/api/auth/login', async(req,res)=>{
         });
     }
 
-if(
-    user.authProvider === "local" &&
-    !user.isVerified
-)
-{
-    return res.json({
-        success:false,
-        requiresVerification:true,
-        message:"Please verify your email before logging in."
-    });
-}
+
     const mockToken = crypto.randomBytes(40).toString('hex');
 
     res.json({
