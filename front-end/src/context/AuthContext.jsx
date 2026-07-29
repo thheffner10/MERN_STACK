@@ -2,7 +2,8 @@ import React, {
     createContext,
     useContext,
     useMemo,
-    useState
+    useState,
+    useEffect
 } from "react";
 
 import {
@@ -155,6 +156,48 @@ export function AuthProvider({
     const [loading, setLoading] =
         useState(false);
 
+const [checkingSession, setCheckingSession] =
+        useState(true);
+
+useEffect(() => {
+
+    async function restoreSession()
+    {
+        try
+        {
+            const response =
+                await fetch(
+                    "https://tncis4004.xyz/api/auth/me",
+                    {
+                        credentials:"include"
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            if(data.success)
+            {
+                setUser(data.user);
+            }
+        }
+        catch(error)
+        {
+            console.error(
+                "Unable to restore session:",
+                error
+            );
+        }
+        finally
+        {
+            setCheckingSession(false);
+        }
+    }
+
+    restoreSession();
+
+}, []);
+
     async function login(credentials)
     {
         setLoading(true);
@@ -276,6 +319,7 @@ function loginWithGoogle()
                 user,
                 token,
                 loading,
+	checkingSession,
 
 isAuthenticated:
     Boolean(user),

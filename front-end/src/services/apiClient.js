@@ -129,11 +129,14 @@ export async function apiRequest(
             `Bearer ${token}`;
     }
 
-    const response = await fetch(
-        `${API_BASE_URL}${path}`,
-        {
-            method,
-            headers: requestHeaders,
+const response = await fetch(
+    `${API_BASE_URL}${path}`,
+    {
+        method,
+
+        credentials:"include",
+
+        headers: requestHeaders,
 
             body:
                 body === undefined

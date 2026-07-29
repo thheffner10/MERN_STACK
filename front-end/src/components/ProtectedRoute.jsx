@@ -6,15 +6,43 @@ import {
     useLocation
 } from "react-router-dom";
 
-import { useAuth } from "../context/AuthContext";
+import {
+    useAuth
+} from "../context/AuthContext";
+
 
 function ProtectedRoute()
 {
     const {
-        isAuthenticated
+        isAuthenticated,
+        checkingSession
     } = useAuth();
 
-    const location = useLocation();
+
+    const location =
+        useLocation();
+
+
+    if (checkingSession)
+    {
+        return (
+            <main
+                className="route-loading"
+                role="status"
+                aria-live="polite"
+            >
+                <div
+                    className="route-loading-spinner"
+                    aria-hidden="true"
+                />
+
+                <p>
+                    Checking authentication...
+                </p>
+            </main>
+        );
+    }
+
 
     if (!isAuthenticated)
     {
@@ -23,13 +51,16 @@ function ProtectedRoute()
                 to="/login"
                 replace
                 state={{
-                    from: location.pathname
+                    from:
+                        location.pathname
                 }}
             />
         );
     }
 
+
     return <Outlet />;
 }
+
 
 export default ProtectedRoute;
