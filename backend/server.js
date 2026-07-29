@@ -94,14 +94,19 @@ async(accessToken, refreshToken, profile, done)=>{
 }));
 
 passport.serializeUser((user,done)=>{
+    console.log("Serializing user:", user);
+
     done(null,user._id.toString());
 });
 
-
 passport.deserializeUser(async(id,done)=>{
+    
+    console.log("Deserializing user:", id);
 
     const db = client.db('HabitTracker');
 
+    ...
+});
     if(!ObjectId.isValid(id))
     {
         return done(null, false);
@@ -122,22 +127,42 @@ passport.authenticate('google',
     scope:['profile','email']
 }));
 
-app.get('/api/auth/google/callback',
-passport.authenticate('google',
-{
-    failureRedirect:"https://tncis4004.xyz/login"
-}),
-(req,res)=>{
+app.get(
+    '/api/auth/google/callback',
+    passport.authenticate('google', {
+        failureRedirect: "https://tncis4004.xyz/login",
+        session: true
+    }),
+    (req, res) => {
 
-    req.session.save(() => {
+        console.log("Callback user:", req.user);
+        console.log("Callback session:", req.session);
 
-        res.redirect(
-            "https://tncis4004.xyz/dashboard"
-        );
+        req.login(req.user, (err) => {
 
-    });
+            if (err) {
+                console.error("Login session error:", err);
+                return res.redirect(
+                    "https://tncis4004.xyz/login"
+                );
+            }
 
-});
+            req.session.save(() => {
+
+                console.log(
+                    "Session saved successfully"
+                );
+
+                res.redirect(
+                    "https://tncis4004.xyz/dashboard"
+                );
+
+            });
+
+        });
+
+    }
+);
 
 app.get('/api/auth/me', (req, res) => {
 
