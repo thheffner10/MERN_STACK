@@ -2,8 +2,7 @@ import React, {
     createContext,
     useContext,
     useMemo,
-    useState,
-    useEffect
+    useState
 } from "react";
 
 import {
@@ -156,48 +155,6 @@ export function AuthProvider({
     const [loading, setLoading] =
         useState(false);
 
-const [checkingSession, setCheckingSession] =
-        useState(true);
-
-useEffect(() => {
-
-    async function restoreSession()
-    {
-        try
-        {
-            const response =
-                await fetch(
-                    "https://tncis4004.xyz/api/auth/me",
-                    {
-                        credentials:"include"
-                    }
-                );
-
-            const data =
-                await response.json();
-
-            if(data.success)
-            {
-                setUser(data.user);
-            }
-        }
-        catch(error)
-        {
-            console.error(
-                "Unable to restore session:",
-                error
-            );
-        }
-        finally
-        {
-            setCheckingSession(false);
-        }
-    }
-
-    restoreSession();
-
-}, []);
-
     async function login(credentials)
     {
         setLoading(true);
@@ -264,10 +221,37 @@ useEffect(() => {
         }
     }
 
-function loginWithGoogle()
-{
-    googleOAuthLogin();
-}
+    async function loginWithGoogle(
+        credential
+    )
+    {
+        setLoading(true);
+
+        try
+        {
+            const result =
+                await googleOAuthLogin(
+                    credential
+                );
+
+            setUser(result.user);
+            setToken(result.token);
+            setRememberMe(true);
+
+            saveAuthentication({
+                user: result.user,
+                token: result.token,
+                rememberMe: true
+            });
+
+            return result;
+        }
+        finally
+        {
+            setLoading(false);
+        }
+    }
+
     function updateAuthenticatedUser(
         changes
     )
@@ -319,10 +303,11 @@ function loginWithGoogle()
                 user,
                 token,
                 loading,
-	checkingSession,
 
-isAuthenticated:
-    Boolean(user),
+                isAuthenticated:
+                    Boolean(
+                        user && token
+                    ),
 
                 login,
                 register,
