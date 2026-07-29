@@ -16,6 +16,16 @@ const bcrypt = require('bcrypt');
 const passport = require('passport');
 const session = require('express-session');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({ 
+service: "gmail", 
+auth: { 
+user: process.env.EMAIL_USER, 
+pass: process.env.EMAIL_PASSWORD
+ } 
+});
+
 
 const app = express();
 
@@ -67,16 +77,15 @@ async(accessToken, refreshToken, profile, done)=>{
 
     if(!user)
     {
-        const newUser =
-        {
-            googleId:profile.id,
-            username:profile.emails[0].value,
-            firstName:profile.name.givenName,
-            lastName:profile.name.familyName,
-            authProvider:"google"
-        };
-
-
+const newUser =
+{
+    googleId:profile.id,
+    username:profile.emails[0].value,
+    firstName:profile.name.givenName,
+    lastName:profile.name.familyName,
+    authProvider:"google",
+    isVerified:true
+};
         const result =
             await db.collection('Users')
             .insertOne(newUser);
@@ -213,38 +222,248 @@ app.post('/api/auth/register', async(req,res)=>{
     const hashedPassword = await bcrypt.hash(password,10);
 
 
-    await db.collection('Users').insertOne({
-        firstName:firstName,
-        lastName:lastName,
-        username:email,
-        password:hashedPassword,
-        authProvider:"local"
-    });
+const verifyToken =
+    crypto.randomBytes(32).toString('hex');
 
 
+const verifyExpires =
+    new Date();
+
+
+verifyExpires.setHours(
+    verifyExpires.getHours() + 1
+);
+
+
+await db.collection('Users').insertOne({
+    firstName:firstName,
+    lastName:lastName,
+    username:email,
+    password:hashedPassword,
+    authProvider:"local",
+
+    isVerified:false,
+
+    verifyToken:verifyToken,
+
+    verifyExpires:verifyExpires
+});
     res.json({
         success:true,
         message:"User created"
     });
 
+const verificationURL =
+    `https://tncis4004.xyz/verify-email?token=${verifyToken}`;
+
+
+await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+
+    to: email,
+
+    subject: "Verify your Habit Tracker account",
+
+    html: `
+        <h2>Welcome ${firstName}!</h2>
+
+        <p>
+            Please verify your email address
+            to activate your account.
+        </p>
+
+        <a href="${verificationURL}">
+            Verify Email
+        </a>
+
+        <p>
+            This link expires in 1 hour.
+        </p>
+    `
+});
 });
 
-app.post('/api/auth/resend-verification', async (req, res) => {
-    const { username } = req.body;
+app.post('/api/auth/resend-verification', async(req,res)=>{
+
+    const {email} = req.body;
+
+
+    const db = client.db('HabitTracker');
+
+
+    const user =
+        await db.collection('Users')
+        .findOne({
+            username:email
+        });
+
+
+
+    if(!user)
+    {
+        return res.json({
+            success:false,
+            message:"User not found"
+        });
+    }
+
+
+
+    if(user.isVerified)
+    {
+        return res.json({
+            success:false,
+            message:"Email already verified"
+        });
+    }
+
+
+
+    const verifyToken =
+        crypto.randomBytes(32).toString('hex');
+
+
+    const verifyExpires =
+        new Date();
+
+
+    verifyExpires.setHours(
+        verifyExpires.getHours() + 1
+    );
+
+
+
+    await db.collection('Users')
+    .updateOne(
+        {
+            _id:user._id
+        },
+        {
+            $set:{
+                verifyToken,
+                verifyExpires
+            }
+        }
+    );
+
+
+
+    const verificationURL =
+        `https://tncis4004.xyz/verify-email?token=${verifyToken}`;
+
+
+
+    await transporter.sendMail({
+
+        from:process.env.EMAIL_USER,
+
+        to:user.username,
+
+        subject:"Verify your Habit Tracker account",
+
+        html:`
+            <h2>Email Verification</h2>
+
+            <p>
+                Click the link below to verify your account.
+            </p>
+
+            <a href="${verificationURL}">
+                Verify Email
+            </a>
+        `
+    });
+
+
 
     res.json({
-        success: true,
-        message: `A new verification link has been sent to ${username || 'your email'}.`
+        success:true,
+        message:"A new verification link has been sent."
     });
+
 });
+app.post('/api/auth/verify-email', async(req,res)=>{
 
-app.post('/api/auth/verify-email', async (req, res) => {
-    const { token } = req.body;
+    const {token} = req.body;
+
+
+    if(!token)
+    {
+        return res.json({
+            success:false,
+            message:"Missing verification token"
+        });
+    }
+
+
+    const db = client.db('HabitTracker');
+
+
+    const user =
+        await db.collection('Users')
+        .findOne({
+            verifyToken:token
+        });
+
+
+
+    if(!user)
+    {
+        return res.json({
+            success:false,
+            message:"Invalid verification token"
+        });
+    }
+
+
+
+    if(
+        new Date() >
+        new Date(user.verifyExpires)
+    )
+    {
+        return res.json({
+            success:false,
+            message:"Verification token expired"
+        });
+    }
+
+
+
+    if(user.isVerified)
+    {
+        return res.json({
+            success:false,
+            message:"Email already verified"
+        });
+    }
+
+
+
+    await db.collection('Users')
+    .updateOne(
+        {
+            _id:user._id
+        },
+        {
+            $set:{
+                isVerified:true
+            },
+
+            $unset:{
+                verifyToken:"",
+                verifyExpires:""
+            }
+        }
+    );
+
+
 
     res.json({
-        success: true,
-        message: "Email successfully verified! You can now log in."
+        success:true,
+        message:"Email successfully verified! You can now log in."
     });
+
 });
 
 app.post('/api/auth/login', async(req,res)=>{
@@ -278,6 +497,17 @@ app.post('/api/auth/login', async(req,res)=>{
         });
     }
 
+if(
+    user.authProvider === "local" &&
+    !user.isVerified
+)
+{
+    return res.json({
+        success:false,
+        requiresVerification:true,
+        message:"Please verify your email before logging in."
+    });
+}
     const mockToken = crypto.randomBytes(40).toString('hex');
 
     res.json({

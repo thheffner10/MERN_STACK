@@ -2,22 +2,26 @@ import {
     apiRequest
 } from "./apiClient";
 
+
 const DEV_BYPASS_ENABLED =
     import.meta.env.DEV;
+
 
 export const DEV_BYPASS_ACCOUNT = {
     email: "dev@example.com",
     password: "Dev12345!"
 };
 
+
 const DEV_BYPASS_USER = {
     id: "development-bypass-user",
     firstName: "Development",
     lastName: "User",
     email: DEV_BYPASS_ACCOUNT.email,
-    emailVerified: true,
+    isVerified: true,
     provider: "development-bypass"
 };
+
 
 function normalizeEmail(email)
 {
@@ -25,6 +29,7 @@ function normalizeEmail(email)
         .trim()
         .toLowerCase();
 }
+
 
 function isDevelopmentBypass(
     credentials
@@ -41,18 +46,22 @@ function isDevelopmentBypass(
     );
 }
 
+
 export async function loginUser(
     credentials
 )
 {
     /*
-     * This bypass works only while running:
+     * Development-only login bypass.
+     *
+     * Works only with:
      *
      * npm run dev
      *
-     * Vite sets import.meta.env.DEV to false
+     * import.meta.env.DEV is false
      * in production builds.
      */
+
     if (
         isDevelopmentBypass(
             credentials
@@ -63,9 +72,12 @@ export async function loginUser(
             user: DEV_BYPASS_USER,
             token:
                 "development-bypass-token",
-            requiresVerification: false
+
+            requiresVerification:
+                false
         };
     }
+
 
     return apiRequest(
         "/auth/login",
@@ -87,6 +99,7 @@ export async function loginUser(
         }
     );
 }
+
 
 export async function registerUser(
     formData
@@ -121,6 +134,7 @@ export async function registerUser(
     );
 }
 
+
 export async function requestPasswordReset(
     email
 )
@@ -140,6 +154,7 @@ export async function requestPasswordReset(
         }
     );
 }
+
 
 export async function resetUserPassword({
     token,
@@ -162,6 +177,7 @@ export async function resetUserPassword({
     );
 }
 
+
 export async function verifyUserEmail(
     token
 )
@@ -180,6 +196,7 @@ export async function verifyUserEmail(
         }
     );
 }
+
 
 export async function resendVerificationEmail(
     email
@@ -201,11 +218,13 @@ export async function resendVerificationEmail(
     );
 }
 
+
 export function googleOAuthLogin()
 {
     window.location.href =
         "https://tncis4004.xyz/api/auth/google";
 }
+
 
 export async function getCurrentUser()
 {
