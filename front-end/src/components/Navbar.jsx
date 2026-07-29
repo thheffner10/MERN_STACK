@@ -15,7 +15,7 @@ function Navbar()
 
             <div className="logo">
 
-                HabitTracker
+                HabitFlow
 
             </div>
 
