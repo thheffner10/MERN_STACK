@@ -31,7 +31,7 @@ function ProfileBadge()
                 </h4>
 
                 <p>
-                    Habit tracker
+                    Habit Flow
                 </p>
             </div>
         </div>

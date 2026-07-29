@@ -9,7 +9,7 @@ function Footer()
 
             <p>
 
-                © 2026 HabitTracker
+                © 2026 HabitFlow
 
             </p>
 
