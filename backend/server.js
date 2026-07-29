@@ -12,12 +12,14 @@ async function connectDB()
 
 const express = require('express');
 const cors = require('cors');
-const app = express();
 const bcrypt = require('bcrypt');
 const passport = require('passport');
 const session = require('express-session');
 const crypto = require('crypto');
 
+const app = express();
+
+app.set("trust proxy", 1);
 
 app.use(express.json());
 
@@ -36,7 +38,7 @@ app.use(session({
     cookie:{
         secure:true,
         httpOnly:true,
-        sameSite:"lax"
+        sameSite:"none"
     }
 }));
 
@@ -127,9 +129,13 @@ passport.authenticate('google',
 }),
 (req,res)=>{
 
-    res.redirect(
-        "https://tncis4004.xyz/dashboard"
-    );
+    req.session.save(() => {
+
+        res.redirect(
+            "https://tncis4004.xyz/dashboard"
+        );
+
+    });
 
 });
 
