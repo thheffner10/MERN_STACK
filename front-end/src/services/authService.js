@@ -204,7 +204,7 @@ export async function resendVerificationEmail(
 export function googleOAuthLogin()
 {
     window.location.href =
-        "https://tncis4004.xyz/auth/google";
+        "https://tncis4004.xyz/api/auth/google";
 }
 
 export async function getCurrentUser()
