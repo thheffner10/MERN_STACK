@@ -123,7 +123,7 @@ passport.authenticate('google',
 app.get('/api/auth/google/callback',
 passport.authenticate('google',
 {
-    failureRedirect:"https://tncis4004.xyz/dashboard"
+    failureRedirect:"https://tncis4004.xyz/login"
 }),
 (req,res)=>{
 
