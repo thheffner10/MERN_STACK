@@ -3,36 +3,23 @@ import React, {
     useState
 } from "react";
 
-import { Link } from "react-router-dom";
+import {
+    Link
+} from "react-router-dom";
 
 import {
     useSettings
 } from "../context/SettingsContext";
-
-import {
-    useHabits
-} from "../context/HabitContext";
-
-import {
-    useTodos
-} from "../context/TodoContext";
 
 import "../styles/settings.css";
 
 function Settings()
 {
     const {
-        settings,
-        updateSettings,
-        resetSettings,
-        clearSettings
+    settings,
+    updateSettings,
+    clearSettings
     } = useSettings();
-
-    const { clearHabits } =
-        useHabits();
-
-    const { clearTodos } =
-        useTodos();
 
     const [formData, setFormData] =
         useState(settings);
@@ -95,11 +82,11 @@ function Settings()
         }, 2500);
     }
 
-    function handleReset()
+    function clearLocalApplicationData()
     {
         const confirmed =
             window.confirm(
-                "Reset your preferences to their default values?"
+                "Clear your locally stored preferences? Your saved habits and tasks will not be deleted."
             );
 
         if (!confirmed)
@@ -107,31 +94,12 @@ function Settings()
             return;
         }
 
-        resetSettings();
+        clearSettings();
 
         setMessage(
-            "Settings were reset to their defaults."
+            "Your local preferences have been cleared."
         );
     }
-
-function clearLocalApplicationData()
-{
-    const confirmed =
-        window.confirm(
-            "Clear your locally stored preferences? Your saved habits and tasks will not be deleted."
-        );
-
-    if (!confirmed)
-    {
-        return;
-    }
-
-    clearSettings();
-
-    setMessage(
-        "Your local preferences have been cleared."
-    );
-}
 
     const initials =
         formData.displayName
@@ -335,19 +303,11 @@ function clearLocalApplicationData()
                         </p>
                     )}
 
-                    <div className="settings-actions">
-                        <button type="submit">
-                            Save Settings
-                        </button>
-
-                        <button
-                            type="button"
-                            className="secondary-button"
-                            onClick={handleReset}
-                        >
-                            Reset Preferences
-                        </button>
-                    </div>
+                <div className="settings-actions">
+                    <button type="submit">
+                        Save Settings
+                    </button>
+                 </div>
                 </div>
 
                 <aside className="settings-side-column">
@@ -367,7 +327,13 @@ function clearLocalApplicationData()
                                 Change password
                             </Link>
 
-                            <Link to="/verify-email">
+                            <Link
+                                to="/verify-email"
+                                state={{
+                                    email:
+                                        settings.email
+                                }}
+                            >
                                 Verify email
                             </Link>
                         </div>
@@ -377,9 +343,10 @@ function clearLocalApplicationData()
                         <h2>Local Data</h2>
 
                         <p>
-                        Remove preferences saved locally
-                        in this browser. Habits and tasks
-                        stored by your account will remain.
+                            Remove preferences saved
+                            locally in this browser.
+                            Habits and tasks stored by
+                            your account will remain.
                         </p>
 
                         <button
