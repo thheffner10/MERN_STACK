@@ -99,25 +99,23 @@ passport.serializeUser((user,done)=>{
     done(null,user._id.toString());
 });
 
-passport.deserializeUser(async(id,done)=>{
-    
+passport.deserializeUser(async (id, done) => {
+
     console.log("Deserializing user:", id);
 
-    const db = client.db('HabitTracker');
+    const db = client.db("HabitTracker");
 
-    ...
-});
-    if(!ObjectId.isValid(id))
+    if (!ObjectId.isValid(id))
     {
         return done(null, false);
     }
 
-    const user = await db.collection('Users')
+    const user = await db.collection("Users")
         .findOne({
-            _id:new ObjectId(id)
+            _id: new ObjectId(id)
         });
 
-    done(null,user);
+    done(null, user);
 
 });
 
