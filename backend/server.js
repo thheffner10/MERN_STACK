@@ -1,50 +1,88 @@
 const { MongoClient, ObjectId } = require('mongodb');
 
 require('dotenv').config();
+
 const url = process.env.MONGODB_URI;
 
-const client = new MongoClient(url);
+const client =
+    new MongoClient(url);
+
 
 async function connectDB()
 {
     await client.connect();
 }
 
+
 const express = require('express');
 const cors = require('cors');
+
 const app = express();
+
+
+app.set(
+    "trust proxy",
+    1
+);
+
+
 const bcrypt = require('bcrypt');
+
 const passport = require('passport');
+
 const session = require('express-session');
+
 const crypto = require('crypto');
 
 
-app.use(express.json());
+app.use(
+    express.json()
+);
+
 
 app.use(cors({
-  origin: [
-    'https://tncis4004.xyz', 
-    'http://localhost:5173'
-  ],
-  credentials: true
+    origin:[
+        'https://tncis4004.xyz',
+        'http://localhost:5173'
+    ],
+
+    credentials:true
 }));
+
 
 app.use(session({
-    secret:process.env.SESSION_SECRET,
+
+    secret:
+        process.env.SESSION_SECRET,
+
     resave:false,
+
     saveUninitialized:false,
+
     cookie:{
+
         secure:true,
+
         httpOnly:true,
-        sameSite:"lax"
+
+        sameSite:"none"
     }
+
 }));
 
-app.use(passport.initialize());
-app.use(passport.session());
 
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
+app.use(
+    passport.initialize()
+);
 
+
+app.use(
+    passport.session()
+);
+
+
+const GoogleStrategy =
+    require('passport-google-oauth20').Strategy;
 
 passport.use(new GoogleStrategy(
 {
@@ -126,6 +164,21 @@ passport.authenticate('google',
     failureRedirect:"https://tncis4004.xyz/login"
 }),
 (req,res)=>{
+
+    console.log(
+        "===== GOOGLE LOGIN SUCCESS ====="
+    );
+
+    console.log(
+        "USER:",
+        req.user
+    );
+
+    console.log(
+        "SESSION:",
+        req.session
+    );
+
 
     res.redirect(
         "https://tncis4004.xyz/dashboard"
